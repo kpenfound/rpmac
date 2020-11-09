@@ -30,6 +30,7 @@ This will set up a test repo on a local webserver.  The repo file will be availa
 
 ### Functional Commands
 - [x] Help
+- [ ] Add Repo
 - [ ] Install
 - [ ] Uninstall
 - [ ] Search

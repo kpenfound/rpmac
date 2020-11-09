@@ -13,6 +13,9 @@ func Main(args []string) int {
 	c.Args = os.Args[1:]
 
 	c.Commands = map[string]cli.CommandFactory{
+		"add-repo": func() (cli.Command, error) {
+			return &AddRepoCommand{}, nil
+		},
 		"install": func() (cli.Command, error) {
 			return &InstallCommand{}, nil
 		},
