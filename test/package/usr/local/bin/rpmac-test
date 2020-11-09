@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+echo "rpmac says Hello World!"

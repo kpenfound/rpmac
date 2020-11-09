@@ -1,0 +1,5 @@
+[rpmac-test]
+name=RPMAC testing repository
+baseurl=http://localhost/mac/darwin/test
+enabled=1
+gpgcheck=0
