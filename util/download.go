@@ -3,12 +3,13 @@ package util
 import (
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 )
 
 // Download util function to download a file from a given URL to a destination directory
-func Download(URL string, destination string) error {
+func Download(URL string, destination string, perm os.FileMode) error {
 	URLparts := strings.Split(URL, "/")
 	filename := URLparts[len(URLparts)-1]
 	resp, err := http.Get(URL)
@@ -19,6 +20,6 @@ func Download(URL string, destination string) error {
 	body, err := ioutil.ReadAll(resp.Body)
 
 	file := filepath.Join(destination, filename)
-	err = ioutil.WriteFile(file, body, 0666)
+	err = ioutil.WriteFile(file, body, perm)
 	return err
 }

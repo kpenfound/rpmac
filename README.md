@@ -1,6 +1,8 @@
 # rpmac
 A rpm based package manager for Mac
 
+HashiCorp Engineering Services Hackathon 2020
+
 ## Testing
 
 ### Run test repo
