@@ -13,13 +13,13 @@ import (
 
 // Repositories struct for all local repositories
 type Repositories struct {
-	Repositories []Repository
+	Repositories []*Repository
 }
 
 // InitRepositories initializes the repository objects
 func InitRepositories() (Repositories, error) {
 	r := Repositories{}
-	repos := []Repository{}
+	repos := []*Repository{}
 	repodir := util.ReplaceHome(constants.RepoDir)
 	files, err := ioutil.ReadDir(repodir)
 	if err != nil {
@@ -34,7 +34,7 @@ func InitRepositories() (Repositories, error) {
 				return r, err
 			}
 			for _, rs := range repo { // A repo file can contain multiple repos
-				repos = append(repos, rs)
+				repos = append(repos, &rs)
 			}
 		}
 
