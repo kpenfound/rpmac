@@ -1,10 +1,12 @@
 package repository
 
 import (
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -18,6 +20,7 @@ import (
 
 // Repository package repository struct
 type Repository struct {
+	ID         string
 	Name       string
 	BaseURL    string
 	Enabled    bool
@@ -27,9 +30,68 @@ type Repository struct {
 	Packages   []rpm.RPM
 }
 
+// ReadRepoFile returns a repository slice for a given repo file
+func ReadRepoFile(repofile string) ([]Repository, error) {
+	r := []Repository{} // A repo file can contain multiple repos
+
+	file, err := os.Open(repofile)
+	if err != nil {
+		return r, err
+	}
+	defer file.Close()
+
+	reader := bufio.NewReader(file)
+	var line string
+	var repo Repository
+	repoCounter := 0
+	for {
+		line, err = reader.ReadString('\n')
+		if err != nil && err != io.EOF {
+			break
+		}
+
+		// Process the line here.
+		if len(line) > 1 {
+			if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
+				if repoCounter > 0 { // More than one repo in this file, make a new repo
+					r = append(r, repo)
+				}
+				repo = Repository{}
+				repoCounter++
+				id := strings.Trim(line, "[]")
+				repo.ID = id
+				repo.CacheFiles = []string{}
+				repo.Packages = []rpm.RPM{}
+				repo.Revision = 0
+			} else if strings.Contains(line, "=") {
+				lineParts := strings.Split(line, "=")
+				switch lineParts[0] {
+				case "name":
+					repo.Name = lineParts[1]
+				case "baseurl":
+					repo.BaseURL = lineParts[1]
+				case "enabled":
+					repo.Enabled = lineParts[1] == "1"
+				case "gpgcheck":
+					repo.Gpgcheck = lineParts[1] == "1"
+				}
+			}
+		}
+
+		if err != nil {
+			break
+		}
+	}
+	if err != io.EOF {
+		return r, err
+	}
+
+	return r, nil
+}
+
 // Sync a repository metadata with local cache
 func (r *Repository) Sync() error {
-	cachePath := filepath.Join(constants.CacheDir, r.Name)
+	cachePath := filepath.Join(constants.CacheDir, r.ID)
 
 	// Read repomd.xml
 	repomdURL := fmt.Sprintf("%s/repodata/repomd.xml", r.BaseURL)
@@ -47,7 +109,7 @@ func (r *Repository) Sync() error {
 	}
 
 	// Check update TODO:Compare against cached revision
-	if rmd.Revision > 0 {
+	if rmd.Revision > r.Revision {
 		err = r.ClearCache()
 		if err != nil {
 			return err
@@ -80,7 +142,7 @@ func (r *Repository) Query(name string) (rpm.RPM, error) {
 
 // ClearCache clears the repo cache
 func (r *Repository) ClearCache() error {
-	cachePath := filepath.Join(constants.CacheDir, r.Name)
+	cachePath := filepath.Join(constants.CacheDir, r.ID)
 	err := os.RemoveAll(cachePath)
 	if err != nil {
 		return err
