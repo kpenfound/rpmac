@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cavaliercoder/go-rpm"
 	"github.com/kpenfound/rpmac/constants"
 	"github.com/kpenfound/rpmac/util"
 )
@@ -85,9 +86,13 @@ func (r *RPM) Install(baseurl string) error {
 		return err
 	}
 
-	fmt.Printf("Downloaded to %s\n", fname)
-
 	// Install the package
+	pf, err := rpm.OpenPackageFile(fname)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Loaded package %+v\n", pf)
 
 	return nil
 }
