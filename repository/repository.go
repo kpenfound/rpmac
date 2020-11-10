@@ -1,12 +1,15 @@
 package repository
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/kpenfound/rpmac/constants"
 	"github.com/kpenfound/rpmac/rpm"
@@ -21,6 +24,7 @@ type Repository struct {
 	Gpgcheck   bool
 	Revision   int
 	CacheFiles []string
+	Packages   []rpm.RPM
 }
 
 // Sync a repository metadata with local cache
@@ -86,6 +90,41 @@ func (r *Repository) ClearCache() error {
 	return err
 }
 
+// LoadCache loads packages from cache files
+func (r *Repository) LoadCache() error {
+	var p []rpm.RPM
+
+	for _, f := range r.CacheFiles {
+		if strings.HasSuffix(f, "-primary.xml.gz") { // Only read primary for now
+			gzdat, err := ioutil.ReadFile(f)
+			if err != nil {
+				return err
+			}
+
+			reader := bytes.NewReader(gzdat)
+			dat, err := gzip.NewReader(reader)
+			if err != nil {
+				return err
+			}
+
+			dats, err := ioutil.ReadAll(dat)
+			if err != nil {
+				return err
+			}
+
+			mf := MetadataFile{}
+			err = xml.Unmarshal(dats, &mf)
+
+			for _, rpm := range mf.PackageList {
+				p = append(p, rpm)
+			}
+		}
+	}
+
+	r.Packages = p
+	return nil
+}
+
 // ************************
 // repomd.xml structs
 // ************************
@@ -110,4 +149,10 @@ type RepoMdItem struct {
 type RepoMd struct {
 	Revision int          `xml:"revision"`
 	Items    []RepoMdItem `xml:"Group>data"`
+}
+
+// MetadataFile struct for the -primary.xml.gz
+type MetadataFile struct {
+	Packages    string    `xml:"packages,attr"`
+	PackageList []rpm.RPM `xml:"Group>package"`
 }

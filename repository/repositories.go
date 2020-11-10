@@ -34,3 +34,16 @@ func (r *Repositories) Query(name string) (rpm.RPM, error) {
 	}
 	return p, nil
 }
+
+// LoadCache load package cache of all enabled repos
+func (r *Repositories) LoadCache() error {
+	for _, repo := range r.Repositories {
+		if repo.Enabled {
+			err := repo.LoadCache()
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
