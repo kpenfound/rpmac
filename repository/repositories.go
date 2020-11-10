@@ -1,12 +1,14 @@
 package repository
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
 
 	"github.com/kpenfound/rpmac/constants"
 	"github.com/kpenfound/rpmac/rpm"
+	"github.com/kpenfound/rpmac/util"
 )
 
 // Repositories struct for all local repositories
@@ -18,14 +20,15 @@ type Repositories struct {
 func InitRepositories() (Repositories, error) {
 	r := Repositories{}
 	repos := []Repository{}
-	files, err := ioutil.ReadDir(constants.RepoDir)
+	repodir := util.ReplaceHome(constants.RepoDir)
+	files, err := ioutil.ReadDir(repodir)
 	if err != nil {
 		return r, err
 	}
 
 	for _, f := range files {
 		if strings.HasSuffix(f.Name(), ".repo") {
-			fname := filepath.Join(constants.RepoDir, f.Name())
+			fname := filepath.Join(repodir, f.Name())
 			repo, err := ReadRepoFile(fname)
 			if err != nil {
 				return r, err
@@ -53,12 +56,14 @@ func InitRepositories() (Repositories, error) {
 // Sync repository metadata with local cache
 func (r *Repositories) Sync() error {
 	for _, repo := range r.Repositories {
+		fmt.Printf("Syncing %s\n", repo.Name)
 		if repo.Enabled {
 			err := repo.Sync()
 			if err != nil {
 				return err
 			}
 		}
+		fmt.Printf("Cache files: %+v\n", repo.CacheFiles)
 	}
 	return nil
 }
@@ -79,6 +84,8 @@ func (r *Repositories) Query(name string) (rpm.RPM, error) {
 // LoadCache load package cache of all enabled repos
 func (r *Repositories) LoadCache() error {
 	for _, repo := range r.Repositories {
+		fmt.Printf("Loading cache for %s\n", repo.Name)
+		fmt.Printf("Cache files: %+v\n", repo.CacheFiles)
 		if repo.Enabled {
 			err := repo.LoadCache()
 			if err != nil {

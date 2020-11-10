@@ -20,5 +20,11 @@ func (i *InstallCommand) Synopsis() string {
 
 // Run operation
 func (i *InstallCommand) Run(args []string) int {
+	// r, err := repository.InitRepositories()
+	// if err != nil {
+	// 	fmt.Printf("Error initializing repositories: %s", err)
+	// 	return 1
+	// }
+
 	return 0
 }

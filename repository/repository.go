@@ -49,6 +49,7 @@ func ReadRepoFile(repofile string) ([]Repository, error) {
 		if err != nil && err != io.EOF {
 			break
 		}
+		line = strings.Trim(line, "\n ")
 
 		// Process the line here.
 		if len(line) > 1 {
@@ -85,6 +86,7 @@ func ReadRepoFile(repofile string) ([]Repository, error) {
 	if err != io.EOF {
 		return r, err
 	}
+	r = append(r, repo)
 
 	return r, nil
 }
@@ -92,6 +94,7 @@ func ReadRepoFile(repofile string) ([]Repository, error) {
 // Sync a repository metadata with local cache
 func (r *Repository) Sync() error {
 	cachePath := filepath.Join(constants.CacheDir, r.ID)
+	cachePath = util.ReplaceHome(cachePath)
 
 	// Read repomd.xml
 	repomdURL := fmt.Sprintf("%s/repodata/repomd.xml", r.BaseURL)
@@ -143,20 +146,23 @@ func (r *Repository) Query(name string) (rpm.RPM, error) {
 // ClearCache clears the repo cache
 func (r *Repository) ClearCache() error {
 	cachePath := filepath.Join(constants.CacheDir, r.ID)
+	cachePath = util.ReplaceHome(cachePath)
 	err := os.RemoveAll(cachePath)
 	if err != nil {
 		return err
 	}
 
-	err = os.Mkdir(cachePath, constants.CachePerm)
+	err = os.Mkdir(cachePath, 0755)
 	return err
 }
 
 // LoadCache loads packages from cache files
 func (r *Repository) LoadCache() error {
 	var p []rpm.RPM
+	fmt.Printf("Repo: %+v\n", r.CacheFiles)
 
 	for _, f := range r.CacheFiles {
+		fmt.Printf("Filename: %s\n", f)
 		if strings.HasSuffix(f, "-primary.xml.gz") { // Only read primary for now
 			gzdat, err := ioutil.ReadFile(f)
 			if err != nil {
@@ -173,6 +179,7 @@ func (r *Repository) LoadCache() error {
 			if err != nil {
 				return err
 			}
+			fmt.Printf("Datafile: %s\n", dats)
 
 			mf := MetadataFile{}
 			err = xml.Unmarshal(dats, &mf)
@@ -210,11 +217,11 @@ type RepoMdItem struct {
 // RepoMd struct for the repomd.xml
 type RepoMd struct {
 	Revision int          `xml:"revision"`
-	Items    []RepoMdItem `xml:"Group>data"`
+	Items    []RepoMdItem `xml:"data"`
 }
 
 // MetadataFile struct for the -primary.xml.gz
 type MetadataFile struct {
 	Packages    string    `xml:"packages,attr"`
-	PackageList []rpm.RPM `xml:"Group>package"`
+	PackageList []rpm.RPM `xml:"package"`
 }

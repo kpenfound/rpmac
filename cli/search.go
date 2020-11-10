@@ -1,5 +1,11 @@
 package cli
 
+import (
+	"fmt"
+
+	"github.com/kpenfound/rpmac/repository"
+)
+
 // SearchCommand search
 type SearchCommand struct{}
 
@@ -20,5 +26,18 @@ func (i *SearchCommand) Synopsis() string {
 
 // Run operation
 func (i *SearchCommand) Run(args []string) int {
+	r, err := repository.InitRepositories()
+	if err != nil {
+		fmt.Printf("Error initializing repositories: %s\n", err)
+		return 1
+	}
+	fmt.Printf("Repos: %+v\n", r)
+
+	rpm, err := r.Query("rpmac-test")
+	if err != nil {
+		fmt.Printf("Error querying for package: %s\n", err)
+		return 1
+	}
+	fmt.Printf("Found package: %s\n", rpm.Name)
 	return 0
 }
