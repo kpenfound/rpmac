@@ -7,4 +7,6 @@ const (
 	CachePerm = 0644
 	// RepoDir Directory for repo files
 	RepoDir = "~/.rpmac/repos.d"
+	// PackageCacheDir to cache rpm files
+	PackageCacheDir = "~/.rpmac/packagecache"
 )

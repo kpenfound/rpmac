@@ -27,7 +27,7 @@ type Repository struct {
 	Gpgcheck   bool
 	Revision   int
 	CacheFiles []string
-	Packages   []rpm.RPM
+	Packages   []*rpm.RPM
 }
 
 // ReadRepoFile returns a repository slice for a given repo file
@@ -62,7 +62,7 @@ func ReadRepoFile(repofile string) ([]Repository, error) {
 				id := strings.Trim(line, "[]")
 				repo.ID = id
 				repo.CacheFiles = []string{}
-				repo.Packages = []rpm.RPM{}
+				repo.Packages = []*rpm.RPM{}
 				repo.Revision = 0
 			} else if strings.Contains(line, "=") {
 				lineParts := strings.Split(line, "=")
@@ -122,13 +122,12 @@ func (r *Repository) Sync() error {
 
 		for _, item := range rmd.Items {
 			itemURL := fmt.Sprintf("%s/%s", r.BaseURL, item.Location.Href)
-			err = util.Download(itemURL, cachePath, constants.CachePerm)
+			fname, err := util.Download(itemURL, cachePath, constants.CachePerm)
 			if err != nil {
 				return err
 			}
 
-			downloadedFile := filepath.Join(cachePath, item.Location.Href)
-			cacheFiles = append(cacheFiles, downloadedFile)
+			cacheFiles = append(cacheFiles, fname)
 		}
 
 		r.CacheFiles = cacheFiles
@@ -138,9 +137,15 @@ func (r *Repository) Sync() error {
 }
 
 // Query for a package by name in local cache
-func (r *Repository) Query(name string) (rpm.RPM, error) {
+func (r *Repository) Query(name string) (*rpm.RPM, error) {
 	p := rpm.RPM{}
-	return p, nil
+
+	for _, rpm := range r.Packages {
+		if rpm.Name == name {
+			return rpm, nil
+		}
+	}
+	return &p, constants.ErrorPackageNotFound
 }
 
 // ClearCache clears the repo cache
@@ -158,11 +163,9 @@ func (r *Repository) ClearCache() error {
 
 // LoadCache loads packages from cache files
 func (r *Repository) LoadCache() error {
-	var p []rpm.RPM
-	fmt.Printf("Repo: %+v\n", r.CacheFiles)
+	var p []*rpm.RPM
 
 	for _, f := range r.CacheFiles {
-		fmt.Printf("Filename: %s\n", f)
 		if strings.HasSuffix(f, "-primary.xml.gz") { // Only read primary for now
 			gzdat, err := ioutil.ReadFile(f)
 			if err != nil {
@@ -179,13 +182,12 @@ func (r *Repository) LoadCache() error {
 			if err != nil {
 				return err
 			}
-			fmt.Printf("Datafile: %s\n", dats)
 
 			mf := MetadataFile{}
 			err = xml.Unmarshal(dats, &mf)
 
 			for _, rpm := range mf.PackageList {
-				p = append(p, rpm)
+				p = append(p, &rpm)
 			}
 		}
 	}

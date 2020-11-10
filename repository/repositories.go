@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -14,6 +13,12 @@ import (
 // Repositories struct for all local repositories
 type Repositories struct {
 	Repositories []*Repository
+}
+
+// RepoPackage used for Query responses
+type RepoPackage struct {
+	Repository *Repository
+	Package    *rpm.RPM
 }
 
 // InitRepositories initializes the repository objects
@@ -56,36 +61,40 @@ func InitRepositories() (Repositories, error) {
 // Sync repository metadata with local cache
 func (r *Repositories) Sync() error {
 	for _, repo := range r.Repositories {
-		fmt.Printf("Syncing %s\n", repo.Name)
 		if repo.Enabled {
 			err := repo.Sync()
 			if err != nil {
 				return err
 			}
 		}
-		fmt.Printf("Cache files: %+v\n", repo.CacheFiles)
 	}
 	return nil
 }
 
 // Query for a package by name in local cache
-func (r *Repositories) Query(name string) (rpm.RPM, error) {
-	p := rpm.RPM{}
+func (r *Repositories) Query(name string) (*RepoPackage, error) {
+	p := RepoPackage{}
 
 	for _, repo := range r.Repositories {
-		p, err := repo.Query(name)
-		if err != nil {
-			return p, err
+		rpm, err := repo.Query(name)
+		if err != nil && err != constants.ErrorPackageNotFound {
+			return &p, err
+		}
+
+		if err != constants.ErrorPackageNotFound {
+			p = RepoPackage{
+				Repository: repo,
+				Package:    rpm,
+			}
+			return &p, nil
 		}
 	}
-	return p, nil
+	return &p, nil
 }
 
 // LoadCache load package cache of all enabled repos
 func (r *Repositories) LoadCache() error {
 	for _, repo := range r.Repositories {
-		fmt.Printf("Loading cache for %s\n", repo.Name)
-		fmt.Printf("Cache files: %+v\n", repo.CacheFiles)
 		if repo.Enabled {
 			err := repo.LoadCache()
 			if err != nil {
