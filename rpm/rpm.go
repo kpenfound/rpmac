@@ -1,5 +1,7 @@
 package rpm
 
+import "fmt"
+
 type RPMVersion struct {
 	Epoch   int    `xml:"epoch,attr"`
 	Version string `xml:"ver,attr"`
@@ -55,4 +57,11 @@ type RPM struct {
 	Location    RPMLocation `xml:"location"`
 	Format      RPMFormat   `xml:"format"`
 	Installed   bool
+}
+
+// Install installs the RPM to the system
+func (r *RPM) Install() error {
+	fmt.Printf("Installing %s\n", r.Name)
+
+	return nil
 }
