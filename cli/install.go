@@ -39,7 +39,7 @@ func (i *InstallCommand) Run(args []string) int {
 	}
 	fmt.Printf("Found package '%s' in repository '%s'\n", rpm.Package.Name, rpm.Repository.Name)
 
-	err = rpm.Package.Install()
+	err = rpm.Package.Install(rpm.Repository.BaseURL)
 	if err != nil {
 		fmt.Printf("Error installing package: %s\n", err)
 		return 1
