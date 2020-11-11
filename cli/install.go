@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/kpenfound/rpmac/repository"
 )
@@ -33,8 +32,7 @@ func (i *InstallCommand) Run(args []string) int {
 		return 1
 	}
 
-	packages := os.Args[2:]
-	rpm, err := r.Query(packages[0])
+	rpm, err := r.Query(args[0])
 	if err != nil {
 		fmt.Printf("Error querying for package: %s\n", err)
 		return 1

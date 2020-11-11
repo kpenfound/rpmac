@@ -5,13 +5,43 @@ HashiCorp Engineering Services Hackathon 2020
 
 ## Testing
 
+```bash
+go build
+```
+
+
 ### Run test repo
 
 ```bash
 make test-repo
 ```
 
-This will set up a test repo on a local webserver.  The repo file will be available at `localhost/test.repo`. Once that's added, the local repo should be visible to rpmac
+This will set up a test repo on a local webserver.  The repo file will be available at `http://localhost/test.repo`. Once that's added, the local repo should be visible to rpmac
+
+### Add repo
+
+```bash
+./rpmac add-repo ${PWD}/test/repo/test.repo
+```
+
+### Search for a package
+
+```bash
+./rpmac search kpfoo
+```
+
+### Install a package
+
+```bash
+./rpmac install kpfoo
+```
+
+### Uninstall a package
+
+```bash
+./rpmac uninstall kpfoo
+```
+
 
 ## Functionality
 
@@ -32,7 +62,7 @@ This will set up a test repo on a local webserver.  The repo file will be availa
 
 ### Functional Commands
 - [x] Help
-- [ ] Add Repo
+- [x] Add Repo
 - [x] Install
 - [x] Uninstall
 - [x] Search
