@@ -58,7 +58,7 @@ This will set up a test repo on a local webserver.  The repo file will be availa
 - [ ] Process install/uninstall hooks
 
 ### General
-- [ ] Lock during operations
+- [x] Lock during operations
 
 ### Functional Commands
 - [x] Help

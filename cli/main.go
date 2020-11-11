@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/kpenfound/rpmac/util"
 	"github.com/mitchellh/cli"
 )
 
@@ -30,7 +31,18 @@ func Main(args []string) int {
 		},
 	}
 
+	err := util.Lock()
+	if err != nil {
+		log.Println(err)
+		return 1
+	}
+
 	exitStatus, err := c.Run()
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = util.Unlock()
 	if err != nil {
 		log.Println(err)
 	}

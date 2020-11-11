@@ -9,4 +9,6 @@ const (
 	RepoDir = "~/.rpmac/repos.d"
 	// PackageCacheDir to cache rpm files
 	PackageCacheDir = "~/.rpmac/packagecache"
+	// Lockfile for locking during operations
+	Lockfile = "~/.rpmac/.LOCK"
 )
