@@ -52,7 +52,6 @@ This will set up a test repo on a local webserver.  The repo file will be availa
 
 ### Package management
 - [x] Install rpm file by name from cached metadata
-- [ ] Resolve package dependencies
 - [ ] Reconcile dependency versions and dependency graph
 - [x] Track installed packages
 - [ ] Process install/uninstall hooks
