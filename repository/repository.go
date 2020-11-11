@@ -27,7 +27,7 @@ type Repository struct {
 	Gpgcheck   bool
 	Revision   int
 	CacheFiles []string
-	Packages   []rpm.RPM
+	Packages   []*rpm.RPM
 }
 
 // ReadRepoFile returns a repository slice for a given repo file
@@ -62,7 +62,7 @@ func ReadRepoFile(repofile string) ([]Repository, error) {
 				id := strings.Trim(line, "[]")
 				repo.ID = id
 				repo.CacheFiles = []string{}
-				repo.Packages = []rpm.RPM{}
+				repo.Packages = []*rpm.RPM{}
 				repo.Revision = 0
 			} else if strings.Contains(line, "=") {
 				lineParts := strings.Split(line, "=")
@@ -93,8 +93,13 @@ func ReadRepoFile(repofile string) ([]Repository, error) {
 
 // Sync a repository metadata with local cache
 func (r *Repository) Sync() error {
-	cachePath := filepath.Join(constants.CacheDir, r.ID)
-	cachePath = util.ReplaceHome(cachePath)
+	cacheDir := util.ReplaceHome(constants.CacheDir)
+	cachePath := filepath.Join(cacheDir, r.ID)
+
+	err := r.Load()
+	if err != nil {
+		return err
+	}
 
 	// Read repomd.xml
 	repomdURL := fmt.Sprintf("%s/repodata/repomd.xml", r.BaseURL)
@@ -111,7 +116,7 @@ func (r *Repository) Sync() error {
 		return err
 	}
 
-	// Check update TODO:Compare against cached revision
+	// Check update
 	if rmd.Revision > r.Revision {
 		err = r.ClearCache()
 		if err != nil {
@@ -131,13 +136,21 @@ func (r *Repository) Sync() error {
 		}
 
 		r.CacheFiles = cacheFiles
+		r.Revision = rmd.Revision
+
+		err = r.LoadCache()
+		if err != nil {
+			return err
+		}
+
+		return r.Save()
 	}
 
 	return nil
 }
 
 // Query for a package by name in local cache
-func (r *Repository) Query(name string) (rpm.RPM, error) {
+func (r *Repository) Query(name string) (*rpm.RPM, error) {
 	p := rpm.RPM{}
 
 	for _, rpm := range r.Packages {
@@ -145,13 +158,13 @@ func (r *Repository) Query(name string) (rpm.RPM, error) {
 			return rpm, nil
 		}
 	}
-	return p, constants.ErrorPackageNotFound
+	return &p, constants.ErrorPackageNotFound
 }
 
 // ClearCache clears the repo cache
 func (r *Repository) ClearCache() error {
-	cachePath := filepath.Join(constants.CacheDir, r.ID)
-	cachePath = util.ReplaceHome(cachePath)
+	cacheDir := util.ReplaceHome(constants.CacheDir)
+	cachePath := filepath.Join(cacheDir, r.ID)
 	err := os.RemoveAll(cachePath)
 	if err != nil {
 		return err
@@ -163,7 +176,7 @@ func (r *Repository) ClearCache() error {
 
 // LoadCache loads packages from cache files
 func (r *Repository) LoadCache() error {
-	var p []rpm.RPM
+	var p []*rpm.RPM
 
 	for _, f := range r.CacheFiles {
 		if strings.HasSuffix(f, "-primary.xml.gz") { // Only read primary for now
@@ -186,13 +199,54 @@ func (r *Repository) LoadCache() error {
 			mf := MetadataFile{}
 			err = xml.Unmarshal(dats, &mf)
 
-			for _, r := range mf.PackageList {
-				p = append(p, r)
-			}
+			p = mf.PackageList
 		}
 	}
 
 	r.Packages = p
+	return nil
+}
+
+// Save repo struct as xml to cache dir
+func (r *Repository) Save() error {
+	cacheDir := util.ReplaceHome(constants.CacheDir)
+	saveFile := filepath.Join(cacheDir, r.ID, "repo.cached.xml")
+
+	file, err := xml.Marshal(r)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(saveFile, file, 0644)
+}
+
+// Load repo struct from cache dir
+func (r *Repository) Load() error {
+	cacheDir := util.ReplaceHome(constants.CacheDir)
+	saveFile := filepath.Join(cacheDir, r.ID, "repo.cached.xml")
+
+	// Check if the savefile exists. return if it doesn't
+	if _, err := os.Stat(saveFile); os.IsNotExist(err) {
+		return nil
+	}
+
+	file, err := ioutil.ReadFile(saveFile)
+	if err != nil {
+		return err
+	}
+
+	loaded := Repository{}
+
+	err = xml.Unmarshal(file, &loaded)
+	if err != nil {
+		return err
+	}
+
+	// Only overwrite these things. Other attributes should be refreshed from the .repo file
+	r.Revision = loaded.Revision
+	r.CacheFiles = loaded.CacheFiles
+	r.Packages = loaded.Packages
+
 	return nil
 }
 
@@ -224,6 +278,6 @@ type RepoMd struct {
 
 // MetadataFile struct for the -primary.xml.gz
 type MetadataFile struct {
-	Packages    string    `xml:"packages,attr"`
-	PackageList []rpm.RPM `xml:"package"`
+	Packages    string     `xml:"packages,attr"`
+	PackageList []*rpm.RPM `xml:"package"`
 }

@@ -45,6 +45,11 @@ func (i *UninstallCommand) Run(args []string) int {
 		return 1
 	}
 	fmt.Printf("Uninstalled %s\n", rpm.Package.Name)
+	err = rpm.Repository.Save()
+	if err != nil {
+		fmt.Printf("Error saving package state: %s\n", err)
+		return 1
+	}
 
 	return 0
 }

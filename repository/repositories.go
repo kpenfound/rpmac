@@ -2,7 +2,6 @@ package repository
 
 import (
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -51,10 +50,6 @@ func InitRepositories() (Repositories, error) {
 	if err != nil {
 		return r, err
 	}
-	err = r.LoadCache()
-	if err != nil {
-		return r, err
-	}
 
 	return r, nil
 }
@@ -85,7 +80,7 @@ func (r *Repositories) Query(name string) (*RepoPackage, error) {
 		if err != constants.ErrorPackageNotFound {
 			p = RepoPackage{
 				Repository: repo,
-				Package:    &rpm,
+				Package:    rpm,
 			}
 			return &p, nil
 		}
@@ -95,21 +90,11 @@ func (r *Repositories) Query(name string) (*RepoPackage, error) {
 
 // LoadCache load package cache of all enabled repos
 func (r *Repositories) LoadCache() error {
-	cacheDir := util.ReplaceHome(constants.PackageCacheDir)
 	for _, repo := range r.Repositories {
 		if repo.Enabled {
 			err := repo.LoadCache()
 			if err != nil {
 				return err
-			}
-			for _, p := range repo.Packages {
-				p.Installed = false
-				// TODO: use a db to save installed packages.
-				// For now, use package cache as truth
-				packageFile := filepath.Join(cacheDir, p.Location.Href)
-				if _, err = os.Stat(packageFile); err == nil {
-					p.Installed = true
-				}
 			}
 		}
 	}

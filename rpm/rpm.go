@@ -97,7 +97,13 @@ func (r *RPM) Uninstall() error {
 			}
 		}
 		// Finally, remove package from cache
-		return os.Remove(packageFile)
+		err = os.Remove(packageFile)
+		if err != nil {
+			return err
+		}
+
+		r.Installed = false
+		return nil
 	}
 
 	return errors.New("Package is not installed")
@@ -130,12 +136,19 @@ func (r *RPM) Install(baseurl string) error {
 	packagedFiles := []string{}
 	for _, fi := range files {
 		if _, err := os.Stat(fi.Name()); err == nil {
-			fmt.Printf("WARNING: %s already exists, overwriting...\n", fi.Name())
+			errstr := fmt.Sprintf("file %s already exists", fi.Name())
+			return errors.New(errstr)
 		}
 		packagedFiles = append(packagedFiles, fi.Name())
 	}
 
-	return extract(pf.Name(), fname, files)
+	err = extract(pf.Name(), fname, files)
+	if err != nil {
+		return err
+	}
+
+	r.Installed = true
+	return nil
 }
 
 func extract(packagename string, filename string, files []rpm.FileInfo) error {
