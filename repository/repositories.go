@@ -85,12 +85,12 @@ func (r *Repositories) Query(name string) (*RepoPackage, error) {
 		if err != constants.ErrorPackageNotFound {
 			p = RepoPackage{
 				Repository: repo,
-				Package:    rpm,
+				Package:    &rpm,
 			}
 			return &p, nil
 		}
 	}
-	return &p, nil
+	return &p, constants.ErrorPackageNotFound
 }
 
 // LoadCache load package cache of all enabled repos

@@ -27,7 +27,7 @@ type Repository struct {
 	Gpgcheck   bool
 	Revision   int
 	CacheFiles []string
-	Packages   []*rpm.RPM
+	Packages   []rpm.RPM
 }
 
 // ReadRepoFile returns a repository slice for a given repo file
@@ -62,7 +62,7 @@ func ReadRepoFile(repofile string) ([]Repository, error) {
 				id := strings.Trim(line, "[]")
 				repo.ID = id
 				repo.CacheFiles = []string{}
-				repo.Packages = []*rpm.RPM{}
+				repo.Packages = []rpm.RPM{}
 				repo.Revision = 0
 			} else if strings.Contains(line, "=") {
 				lineParts := strings.Split(line, "=")
@@ -137,7 +137,7 @@ func (r *Repository) Sync() error {
 }
 
 // Query for a package by name in local cache
-func (r *Repository) Query(name string) (*rpm.RPM, error) {
+func (r *Repository) Query(name string) (rpm.RPM, error) {
 	p := rpm.RPM{}
 
 	for _, rpm := range r.Packages {
@@ -145,7 +145,7 @@ func (r *Repository) Query(name string) (*rpm.RPM, error) {
 			return rpm, nil
 		}
 	}
-	return &p, constants.ErrorPackageNotFound
+	return p, constants.ErrorPackageNotFound
 }
 
 // ClearCache clears the repo cache
@@ -163,7 +163,7 @@ func (r *Repository) ClearCache() error {
 
 // LoadCache loads packages from cache files
 func (r *Repository) LoadCache() error {
-	var p []*rpm.RPM
+	var p []rpm.RPM
 
 	for _, f := range r.CacheFiles {
 		if strings.HasSuffix(f, "-primary.xml.gz") { // Only read primary for now
@@ -186,8 +186,8 @@ func (r *Repository) LoadCache() error {
 			mf := MetadataFile{}
 			err = xml.Unmarshal(dats, &mf)
 
-			for _, rpm := range mf.PackageList {
-				p = append(p, &rpm)
+			for _, r := range mf.PackageList {
+				p = append(p, r)
 			}
 		}
 	}
