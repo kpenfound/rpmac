@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/kpenfound/rpmac/repository"
 )
@@ -32,18 +33,20 @@ func (i *InstallCommand) Run(args []string) int {
 		return 1
 	}
 
-	rpm, err := r.Query("rpmac-test")
+	packages := os.Args[2:]
+	rpm, err := r.Query(packages[0])
 	if err != nil {
 		fmt.Printf("Error querying for package: %s\n", err)
 		return 1
 	}
-	fmt.Printf("Found package '%s' in repository '%s'\n", rpm.Package.Name, rpm.Repository.Name)
+	fmt.Printf("Installing %s/%s\n", rpm.Repository.ID, rpm.Package.Name)
 
 	err = rpm.Package.Install(rpm.Repository.BaseURL)
 	if err != nil {
 		fmt.Printf("Error installing package: %s\n", err)
 		return 1
 	}
+	fmt.Printf("Installed %s\n", rpm.Package.Name)
 
 	return 0
 }

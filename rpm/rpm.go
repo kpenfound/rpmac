@@ -1,12 +1,17 @@
 package rpm
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/cavaliercoder/go-rpm"
 	"github.com/kpenfound/rpmac/constants"
 	"github.com/kpenfound/rpmac/util"
+	"github.com/sassoftware/go-rpmutils"
 )
 
 // Version Version information
@@ -72,9 +77,37 @@ type RPM struct {
 	Installed   bool
 }
 
+// Uninstall uninstalls a package from the system
+func (r *RPM) Uninstall() error {
+	if r.Installed {
+		// Find our package
+		cacheDir := util.ReplaceHome(constants.PackageCacheDir)
+		packageFile := filepath.Join(cacheDir, r.Location.Href)
+		pf, err := rpm.OpenPackageFile(packageFile)
+		if err != nil {
+			return err
+		}
+		// Remove files
+		for _, fi := range pf.Files() {
+			if _, err := os.Stat(fi.Name()); err == nil {
+				err = os.Remove(fi.Name())
+				if err != nil {
+					return err
+				}
+			}
+		}
+		// Finally, remove package from cache
+		return os.Remove(packageFile)
+	}
+
+	return errors.New("Package is not installed")
+}
+
 // Install installs the RPM to the system
 func (r *RPM) Install(baseurl string) error {
-	fmt.Printf("Installing %s\n", r.Name)
+	if r.Installed {
+		return errors.New("Package is already installed")
+	}
 
 	// Download the package
 	packageURL := fmt.Sprintf("%s/%s", baseurl, r.Location.Href)
@@ -92,7 +125,57 @@ func (r *RPM) Install(baseurl string) error {
 		return err
 	}
 
-	fmt.Printf("Loaded package %+v\n", pf)
+	// Check provided files for existing files
+	files := pf.Files()
+	packagedFiles := []string{}
+	for _, fi := range files {
+		if _, err := os.Stat(fi.Name()); err == nil {
+			fmt.Printf("WARNING: %s already exists, overwriting...\n", fi.Name())
+		}
+		packagedFiles = append(packagedFiles, fi.Name())
+	}
+
+	return extract(pf.Name(), fname, files)
+}
+
+func extract(packagename string, filename string, files []rpm.FileInfo) error {
+
+	// Create temp dir for extraction
+	tmp, err := ioutil.TempDir("", packagename)
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmp)
+
+	f, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+	r := bytes.NewReader(f)
+
+	// Load and extract rpm to temp directory
+	rrpm, err := rpmutils.ReadRpm(r)
+	if err != nil {
+		return err
+	}
+	err = rrpm.ExpandPayload(tmp)
+	if err != nil {
+		return err
+	}
+
+	// Move extracted files to filesystem
+	for _, fi := range files {
+		tmpFile := filepath.Join(tmp, fi.Name())
+		err = os.Link(tmpFile, fi.Name())
+		if err != nil {
+			return err
+		}
+		err = os.Chmod(fi.Name(), fi.Mode())
+		if err != nil {
+			return err
+		}
+		// TODO: set user, group, and stuff
+	}
 
 	return nil
 }
