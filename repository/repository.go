@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/kpenfound/rpmac/constants"
@@ -149,12 +150,41 @@ func (r *Repository) Sync() error {
 	return nil
 }
 
+func compatibleVersion(version string, fuzzyVersion string) bool {
+	v1 := strings.Split(version, ".")
+	v2 := strings.Split(fuzzyVersion, ".")
+
+	for i, v1part := range v1 {
+		if (len(v2) - 1) < i {
+			return true
+		}
+		v1partInt, err := strconv.ParseInt(v1part, 10, 32)
+		if err != nil {
+			return false
+		}
+		v2partInt, err := strconv.ParseInt(v2[i], 10, 32)
+		if err != nil {
+			return false //TODO: Handle beta and rc
+		}
+
+		// Check if v1 > v2
+		if v1partInt > v2partInt {
+			return false
+		}
+	}
+	return false
+}
+
 // Query for a package by name in local cache
-func (r *Repository) Query(name string) (*rpm.RPM, error) {
+func (r *Repository) Query(opts QueryOptions) (*rpm.RPM, error) {
 	p := rpm.RPM{}
 
 	for _, rpm := range r.Packages {
-		if rpm.Name == name {
+		if rpm.Name == opts.Name {
+			// Check version against query version
+			if opts.FuzzyVersion != "" && !compatibleVersion(rpm.Version.Version, opts.FuzzyVersion) {
+				continue
+			}
 			return rpm, nil
 		}
 	}

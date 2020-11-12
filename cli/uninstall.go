@@ -32,7 +32,8 @@ func (i *UninstallCommand) Run(args []string) int {
 		return 1
 	}
 
-	rpm, err := r.Query(args[0])
+	qo := repository.MakeQueryOptions(args[0])
+	rpm, err := r.Query(qo)
 	if err != nil {
 		fmt.Printf("Error querying for package: %s\n", err)
 		return 1

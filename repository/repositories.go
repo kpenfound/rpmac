@@ -67,12 +67,34 @@ func (r *Repositories) Sync() error {
 	return nil
 }
 
+// QueryOptions options for Query
+type QueryOptions struct {
+	// Name
+	Name string
+	// FuzzyVersion, like 1.0.0-beta1, 1.0.0, 1.0, or 1
+	FuzzyVersion string
+}
+
+// MakeQueryOptions creates a QueryOptions struct from a package string like firefox=33.*
+func MakeQueryOptions(packagestr string) QueryOptions {
+	qo := QueryOptions{}
+
+	// Separate name from version
+	parts := strings.Split(packagestr, "=")
+	qo.Name = parts[0]
+	if len(parts) > 1 {
+		qo.FuzzyVersion = parts[1]
+	}
+
+	return qo
+}
+
 // Query for a package by name in local cache
-func (r *Repositories) Query(name string) (*RepoPackage, error) {
+func (r *Repositories) Query(opts QueryOptions) (*RepoPackage, error) {
 	p := RepoPackage{}
 
 	for _, repo := range r.Repositories {
-		rpm, err := repo.Query(name)
+		rpm, err := repo.Query(opts)
 		if err != nil && err != constants.ErrorPackageNotFound {
 			return &p, err
 		}

@@ -37,7 +37,9 @@ func (i *InstallCommand) Run(args []string) int {
 	toInstall := []*repository.RepoPackage{}
 
 	for _, a := range args {
-		pack, err := r.Query(a)
+
+		qo := repository.MakeQueryOptions(a)
+		pack, err := r.Query(qo)
 		if err != nil {
 			fmt.Printf("Error querying for package: %s\n", err)
 			return 1
