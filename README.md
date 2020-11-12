@@ -53,7 +53,7 @@ This will set up a test repo on a local webserver.  The repo file will be availa
 ### Package management
 - [x] Install rpm file by name from cached metadata
 - [x] Track installed packages
-- [ ] Install a specific version of a package
+- [x] Install a specific version of a package
 - [ ] Reconcile dependency versions and dependency graph
 - [ ] Process install/uninstall hooks
 

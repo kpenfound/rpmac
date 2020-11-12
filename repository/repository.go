@@ -150,14 +150,16 @@ func (r *Repository) Sync() error {
 	return nil
 }
 
-func compatibleVersion(version string, fuzzyVersion string) bool {
-	v1 := strings.Split(version, ".")
-	v2 := strings.Split(fuzzyVersion, ".")
+func compatibleVersion(version1 string, version2 string, fuzzy bool) bool {
+	v1 := strings.Split(version1, ".")
+	v2 := strings.Split(version2, ".")
 
 	for i, v1part := range v1 {
+		// 1.0.0 is compatible with 1 and 1.0 if fuzzy==true
 		if (len(v2) - 1) < i {
-			return true
+			return fuzzy
 		}
+		// Convert version parts to int for comparison
 		v1partInt, err := strconv.ParseInt(v1part, 10, 32)
 		if err != nil {
 			return false
@@ -178,17 +180,27 @@ func compatibleVersion(version string, fuzzyVersion string) bool {
 // Query for a package by name in local cache
 func (r *Repository) Query(opts QueryOptions) (*rpm.RPM, error) {
 	p := rpm.RPM{}
+	var e error
 
 	for _, rpm := range r.Packages {
 		if rpm.Name == opts.Name {
 			// Check version against query version
-			if opts.FuzzyVersion != "" && !compatibleVersion(rpm.Version.Version, opts.FuzzyVersion) {
+			if opts.FuzzyVersion != "" && !compatibleVersion(rpm.Version.Version, opts.FuzzyVersion, true) {
 				continue
 			}
-			return rpm, nil
+
+			// Return latest compatible version of package
+			if p.Name != "" && compatibleVersion(p.Version.Version, rpm.Version.Version, false) {
+				p = *rpm
+			}
 		}
 	}
-	return &p, constants.ErrorPackageNotFound
+
+	// https://media.giphy.com/media/IHOOMIiw5v9VS/giphy.gif
+	if p.Name == "" {
+		e = constants.ErrorPackageNotFound
+	}
+	return &p, e
 }
 
 // ClearCache clears the repo cache

@@ -13,7 +13,7 @@ type InstallCommand struct{}
 
 // Help text
 func (i *InstallCommand) Help() string {
-	return "rpmac install {package}"
+	return "rpmac install {package} {package2=1.0}"
 }
 
 // Name text
