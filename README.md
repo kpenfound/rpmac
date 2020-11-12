@@ -42,6 +42,13 @@ This will set up a test repo on a local webserver.  The repo file will be availa
 ./rpmac uninstall kpfoo
 ```
 
+### Upgrade a package
+
+```bash
+./rpmac install kpfoo=1.1.0
+./rpmac upgrade kpfoo
+```
+
 
 ## Functionality
 
