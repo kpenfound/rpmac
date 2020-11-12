@@ -150,7 +150,8 @@ func (r *Repository) Sync() error {
 	return nil
 }
 
-func compatibleVersion(version1 string, version2 string, fuzzy bool) bool {
+// CompatibleVersion checks version1 to be compatible with version2
+func CompatibleVersion(version1 string, version2 string, fuzzy bool) bool {
 	v1 := strings.Split(version1, ".")
 	v2 := strings.Split(version2, ".")
 
@@ -190,7 +191,7 @@ func (r *Repository) Query(opts QueryOptions) (*rpm.RPM, error) {
 			}
 
 			// Check version against query version
-			if opts.FuzzyVersion != "" && !compatibleVersion(rpm.Version.Version, opts.FuzzyVersion, true) {
+			if opts.FuzzyVersion != "" && !CompatibleVersion(rpm.Version.Version, opts.FuzzyVersion, true) {
 				continue
 			}
 
@@ -200,7 +201,7 @@ func (r *Repository) Query(opts QueryOptions) (*rpm.RPM, error) {
 			}
 
 			// Return latest compatible version of package
-			if packageIndex > -1 && compatibleVersion(r.Packages[i].Version.Version, rpm.Version.Version, false) {
+			if packageIndex > -1 && CompatibleVersion(r.Packages[i].Version.Version, rpm.Version.Version, false) {
 				packageIndex = i
 			}
 

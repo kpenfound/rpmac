@@ -66,4 +66,4 @@ This will set up a test repo on a local webserver.  The repo file will be availa
 - [x] Install
 - [x] Uninstall
 - [x] Search
-- [ ] Upgrade
+- [x] Upgrade
