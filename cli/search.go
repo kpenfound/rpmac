@@ -2,7 +2,9 @@ package cli
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/jedib0t/go-pretty/table"
 	"github.com/kpenfound/rpmac/repository"
 )
 
@@ -32,12 +34,30 @@ func (i *SearchCommand) Run(args []string) int {
 		return 1
 	}
 
+	fmt.Printf("Searching for %s...\n\n", args[0])
 	qo := repository.MakeQueryOptions(args[0])
 	rpm, err := r.Query(qo)
 	if err != nil {
 		fmt.Printf("Error querying for package: %s\n", err)
 		return 1
 	}
-	fmt.Printf("Found package %s/%s\n", rpm.Repository.ID, rpm.Package.Name)
+
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	style := t.Style()
+	style.Options = table.OptionsNoBordersAndSeparators
+	t.SetStyle(*style)
+
+	t.AppendHeader(table.Row{"", "Package", "Version", "Repository", "Size", "Installed"})
+	t.AppendRow(table.Row{
+		"",
+		rpm.Package.Name,
+		rpm.Package.Version.Version,
+		rpm.Repository.Name,
+		rpm.Package.Size.Installed,
+		rpm.Package.Installed})
+	t.Render()
+	fmt.Printf("\n")
+
 	return 0
 }

@@ -2,7 +2,9 @@ package cli
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/jedib0t/go-pretty/table"
 	"github.com/kpenfound/rpmac/constants"
 	"github.com/kpenfound/rpmac/repository"
 )
@@ -40,7 +42,23 @@ func (i *UninstallCommand) Run(args []string) int {
 		fmt.Printf("Error querying for package: %s\n", err)
 		return 1
 	}
-	fmt.Printf("Uninstalling %s/%s\n", rpm.Repository.ID, rpm.Package.Name)
+	fmt.Printf("Uninstalling %s...\n\n", args[0])
+
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	style := t.Style()
+	style.Options = table.OptionsNoBordersAndSeparators
+	t.SetStyle(*style)
+
+	t.AppendHeader(table.Row{"", "Package", "Version", "Repository", "Size"})
+	t.AppendRow(table.Row{
+		"uninstall",
+		rpm.Package.Name,
+		rpm.Package.Version.Version,
+		rpm.Repository.Name,
+		rpm.Package.Size.Installed})
+	t.Render()
+	fmt.Printf("\n")
 
 	err = rpm.Package.Uninstall()
 	if err != nil {

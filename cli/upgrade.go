@@ -2,8 +2,10 @@ package cli
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
+	"github.com/jedib0t/go-pretty/table"
 	"github.com/kpenfound/rpmac/constants"
 	"github.com/kpenfound/rpmac/repository"
 )
@@ -53,7 +55,33 @@ func (i *UpgradeCommand) Run(args []string) int {
 	v1 := rpmInstalled.Package.Version.Version
 	v2 := rpmAny.Package.Version.Version
 	if strings.Compare(v1, v2) != 0 && repository.CompatibleVersion(v1, v2, false) {
-		fmt.Printf("Upgrading %s from %s to %s\n", args[0], v1, v2)
+		fmt.Printf("Upgrading %s...\n\n", args[0])
+
+		t := table.NewWriter()
+		t.SetOutputMirror(os.Stdout)
+		style := t.Style()
+		style.Options = table.OptionsNoBordersAndSeparators
+		t.SetStyle(*style)
+
+		t.AppendHeader(table.Row{"", "Package", "Version", "Repository", "Size"})
+		t.AppendRows([]table.Row{
+			{
+				"uninstall",
+				rpmInstalled.Package.Name,
+				rpmInstalled.Package.Version.Version,
+				rpmInstalled.Repository.Name,
+				rpmInstalled.Package.Size.Installed,
+			},
+			{
+				"install",
+				rpmAny.Package.Name,
+				rpmAny.Package.Version.Version,
+				rpmAny.Repository.Name,
+				rpmAny.Package.Size.Installed,
+			},
+		})
+		t.Render()
+		fmt.Printf("\n")
 
 		// Uninstall Old Version
 		err = rpmInstalled.Package.Uninstall()
@@ -80,6 +108,8 @@ func (i *UpgradeCommand) Run(args []string) int {
 		}
 
 		fmt.Println("Completed upgrade successfully.")
+	} else {
+		fmt.Printf("Package %s is already at latest version.\n", args[0])
 	}
 
 	return 0

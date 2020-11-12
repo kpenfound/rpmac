@@ -57,9 +57,9 @@ func (i *InstallCommand) Run(args []string) int {
 	style.Options = table.OptionsNoBordersAndSeparators
 	t.SetStyle(*style)
 
-	t.AppendHeader(table.Row{"Package", "Version", "Repository", "Size"})
+	t.AppendHeader(table.Row{"", "Package", "Version", "Repository", "Size"})
 	for _, i := range toInstall {
-		t.AppendRow(table.Row{i.Package.Name, i.Package.Version.Version, i.Repository.Name, i.Package.Size.Installed})
+		t.AppendRow(table.Row{"install", i.Package.Name, i.Package.Version.Version, i.Repository.Name, i.Package.Size.Installed})
 	}
 	t.Render()
 	fmt.Printf("\n")
