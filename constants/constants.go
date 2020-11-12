@@ -12,3 +12,10 @@ const (
 	// Lockfile for locking during operations
 	Lockfile = "~/.rpmac/.LOCK"
 )
+
+// Installed Opts
+const (
+	InstalledTrue  = iota
+	InstalledFalse = iota
+	InstalledAny   = iota
+)

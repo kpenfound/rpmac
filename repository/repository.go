@@ -174,33 +174,48 @@ func compatibleVersion(version1 string, version2 string, fuzzy bool) bool {
 			return false
 		}
 	}
-	return false
+	return true
 }
 
 // Query for a package by name in local cache
 func (r *Repository) Query(opts QueryOptions) (*rpm.RPM, error) {
-	p := rpm.RPM{}
+	packageIndex := -1
 	var e error
 
-	for _, rpm := range r.Packages {
+	for i, rpm := range r.Packages {
 		if rpm.Name == opts.Name {
+			// If we dont want an installed version and we find one, error
+			if opts.Installed == constants.InstalledFalse && rpm.Installed {
+				return rpm, constants.ErrorPackageInstalled
+			}
+
 			// Check version against query version
 			if opts.FuzzyVersion != "" && !compatibleVersion(rpm.Version.Version, opts.FuzzyVersion, true) {
 				continue
 			}
 
+			// If we want an installed version and package is not installed, keep looking
+			if opts.Installed == constants.InstalledTrue && !rpm.Installed {
+				continue
+			}
+
 			// Return latest compatible version of package
-			if p.Name != "" && compatibleVersion(p.Version.Version, rpm.Version.Version, false) {
-				p = *rpm
+			if packageIndex > -1 && compatibleVersion(r.Packages[i].Version.Version, rpm.Version.Version, false) {
+				packageIndex = i
+			}
+
+			if packageIndex == -1 {
+				packageIndex = i
 			}
 		}
 	}
 
 	// https://media.giphy.com/media/IHOOMIiw5v9VS/giphy.gif
-	if p.Name == "" {
+	if packageIndex == -1 {
 		e = constants.ErrorPackageNotFound
+		packageIndex = 0
 	}
-	return &p, e
+	return r.Packages[packageIndex], e
 }
 
 // ClearCache clears the repo cache

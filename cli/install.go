@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/jedib0t/go-pretty/table"
+	"github.com/kpenfound/rpmac/constants"
 	"github.com/kpenfound/rpmac/repository"
 )
 
@@ -39,6 +40,7 @@ func (i *InstallCommand) Run(args []string) int {
 	for _, a := range args {
 
 		qo := repository.MakeQueryOptions(a)
+		qo.Installed = constants.InstalledFalse
 		pack, err := r.Query(qo)
 		if err != nil {
 			fmt.Printf("Error querying for package: %s\n", err)

@@ -73,11 +73,17 @@ type QueryOptions struct {
 	Name string
 	// FuzzyVersion, like 1.0.0-beta1, 1.0.0, 1.0, or 1
 	FuzzyVersion string
+	// Installed flag for installed packages
+	Installed uint
 }
 
 // MakeQueryOptions creates a QueryOptions struct from a package string like firefox=33.*
 func MakeQueryOptions(packagestr string) QueryOptions {
-	qo := QueryOptions{}
+	qo := QueryOptions{
+		Name:         "",
+		FuzzyVersion: "",
+		Installed:    constants.InstalledAny,
+	}
 
 	// Separate name from version
 	parts := strings.Split(packagestr, "=")

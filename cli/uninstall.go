@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 
+	"github.com/kpenfound/rpmac/constants"
 	"github.com/kpenfound/rpmac/repository"
 )
 
@@ -33,6 +34,7 @@ func (i *UninstallCommand) Run(args []string) int {
 	}
 
 	qo := repository.MakeQueryOptions(args[0])
+	qo.Installed = constants.InstalledTrue
 	rpm, err := r.Query(qo)
 	if err != nil {
 		fmt.Printf("Error querying for package: %s\n", err)
