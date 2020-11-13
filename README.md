@@ -48,6 +48,7 @@ rpmac upgrade {package}
 - [x] Install package dependencies
 - [ ] Reconcile dependency versions and dependency graph
 - [ ] Process install/uninstall hooks
+- [ ] Global upgrade
 
 ### General
 - [x] Lock during operations
