@@ -107,13 +107,13 @@ func (r *RPM) Uninstall() error {
 		return nil
 	}
 
-	return errors.New("Package is not installed")
+	return constants.ErrorPackageNotInstalled
 }
 
 // Install installs the RPM to the system
 func (r *RPM) Install(baseurl string) error {
 	if r.Installed {
-		return errors.New("Package is already installed")
+		return constants.ErrorPackageInstalled
 	}
 
 	// Download the package
@@ -159,7 +159,7 @@ func extract(packagename string, filename string, files []rpm.FileInfo) error {
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(tmp)
+	//defer os.RemoveAll(tmp)
 
 	f, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -180,10 +180,18 @@ func extract(packagename string, filename string, files []rpm.FileInfo) error {
 	// Move extracted files to filesystem
 	for _, fi := range files {
 		tmpFile := filepath.Join(tmp, fi.Name())
+		newFilePath := filepath.Dir(fi.Name())
+		// Make parent directory of new file
+		err = os.MkdirAll(newFilePath, 0755)
+		if err != nil {
+			return err
+		}
+		// Create hard link for new file
 		err = os.Link(tmpFile, fi.Name())
 		if err != nil {
 			return err
 		}
+		// Set permissions on new file
 		err = os.Chmod(fi.Name(), fi.Mode())
 		if err != nil {
 			return err

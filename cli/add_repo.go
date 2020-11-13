@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/kpenfound/rpmac/constants"
 	"github.com/kpenfound/rpmac/util"
@@ -30,8 +29,7 @@ func (i *AddRepoCommand) Synopsis() string {
 
 // Run operation
 func (i *AddRepoCommand) Run(args []string) int {
-	repofile := strings.Split(args[0], "/")
-	filename := repofile[len(repofile)-1]
+	filename := filepath.Base(args[0])
 	repodir := util.ReplaceHome(constants.RepoDir)
 	destfile := filepath.Join(repodir, filename)
 
