@@ -95,8 +95,8 @@ func MakeQueryOptions(packagestr string) QueryOptions {
 	return qo
 }
 
-// Query for a package by name in local cache
-func (r *Repositories) Query(opts QueryOptions) (*RepoPackage, error) {
+// QueryOne for a package by name in local cache
+func (r *Repositories) QueryOne(opts QueryOptions) (*RepoPackage, error) {
 	p := RepoPackage{}
 
 	for _, repo := range r.Repositories {
@@ -106,6 +106,10 @@ func (r *Repositories) Query(opts QueryOptions) (*RepoPackage, error) {
 		}
 
 		if err != constants.ErrorPackageNotFound {
+			if err != nil {
+				return &p, err
+			}
+
 			p = RepoPackage{
 				Repository: repo,
 				Package:    rpm,
@@ -114,6 +118,49 @@ func (r *Repositories) Query(opts QueryOptions) (*RepoPackage, error) {
 		}
 	}
 	return &p, constants.ErrorPackageNotFound
+}
+
+// QueryWithDependencies for a package by name in local cache
+func (r *Repositories) QueryWithDependencies(opts QueryOptions) ([]*RepoPackage, error) {
+	p := []*RepoPackage{}
+
+	for _, repo := range r.Repositories {
+		rpm, err := repo.Query(opts)
+		if err != nil && err != constants.ErrorPackageNotFound {
+			return p, err
+		}
+
+		if err != constants.ErrorPackageNotFound {
+			if err != nil {
+				return p, err
+			}
+
+			// The package we searched for
+			p = append(p, &RepoPackage{
+				Repository: repo,
+				Package:    rpm,
+			})
+
+			// Find all dependencies
+			for _, d := range rpm.Format.Requires {
+				qo := MakeQueryOptions(d.Name)
+				drpm, err := r.QueryOne(qo)
+				if err != nil {
+					if err == constants.ErrorPackageNotFound {
+						return p, constants.ErrorDependencyNotFound
+					}
+					return p, err
+				}
+
+				// Prepend dependency if not already installed
+				if !drpm.Package.Installed {
+					p = append([]*RepoPackage{drpm}, p...)
+				}
+			}
+			return p, nil
+		}
+	}
+	return p, constants.ErrorPackageNotFound
 }
 
 // LoadCache load package cache of all enabled repos

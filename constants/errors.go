@@ -9,4 +9,6 @@ var (
 	ErrorLockfileExists = errors.New("Cannot obtain lock on rpmac")
 	// ErrorPackageInstalled for when a version of the package is already installed
 	ErrorPackageInstalled = errors.New("A version of this package is already installed")
+	// ErrorDependencyNotFound for when you cant find all the package dependencies in repos
+	ErrorDependencyNotFound = errors.New("Cannot resolve all dependencies")
 )

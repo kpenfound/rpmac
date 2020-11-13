@@ -41,12 +41,12 @@ func (i *InstallCommand) Run(args []string) int {
 
 		qo := repository.MakeQueryOptions(a)
 		qo.Installed = constants.InstalledFalse
-		pack, err := r.Query(qo)
+		pack, err := r.QueryWithDependencies(qo)
 		if err != nil {
 			fmt.Printf("Error querying for package: %s\n", err)
 			return 1
 		}
-		toInstall = append(toInstall, pack)
+		toInstall = append(toInstall, pack...)
 	}
 
 	fmt.Printf("Resolved Dependnecies...\n\n")

@@ -51,13 +51,14 @@ type Provides struct {
 
 // Format metadata information
 type Format struct {
-	License   string   `xml:"rpm:license"`
-	Vendor    string   `xml:"rpm:vendor"`
-	Group     string   `xml:"rpm:group"`
-	Buildhost string   `xml:"rpm:buildhost"`
-	SourceRPM string   `xml:"rpm:sourcerpm"`
-	Provides  Provides `xml:"rpm:provides"`
-	File      string   `xml:"file"`
+	License   string     `xml:"license"`
+	Vendor    string     `xml:"vendor"`
+	Group     string     `xml:"group"`
+	Buildhost string     `xml:"buildhost"`
+	SourceRPM string     `xml:"sourcerpm"`
+	Provides  []Provides `xml:"provides>entry"`
+	Requires  []Provides `xml:"requires>entry"`
+	File      string     `xml:"file"`
 }
 
 // RPM package type

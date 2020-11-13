@@ -36,7 +36,7 @@ func (i *SearchCommand) Run(args []string) int {
 
 	fmt.Printf("Searching for %s...\n\n", args[0])
 	qo := repository.MakeQueryOptions(args[0])
-	rpm, err := r.Query(qo)
+	rpm, err := r.QueryOne(qo)
 	if err != nil {
 		fmt.Printf("Error querying for package: %s\n", err)
 		return 1

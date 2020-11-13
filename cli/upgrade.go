@@ -38,7 +38,7 @@ func (i *UpgradeCommand) Run(args []string) int {
 
 	qoInstalled := repository.MakeQueryOptions(args[0])
 	qoInstalled.Installed = constants.InstalledTrue
-	rpmInstalled, err := r.Query(qoInstalled)
+	rpmInstalled, err := r.QueryOne(qoInstalled)
 	if err != nil {
 		fmt.Printf("Error querying for package: %s\n", err)
 		return 1
@@ -46,7 +46,7 @@ func (i *UpgradeCommand) Run(args []string) int {
 
 	qoAny := repository.MakeQueryOptions(args[0])
 	qoAny.Installed = constants.InstalledAny
-	rpmAny, err := r.Query(qoAny)
+	rpmAny, err := r.QueryOne(qoAny)
 	if err != nil {
 		fmt.Printf("Error querying for package: %s\n", err)
 		return 1

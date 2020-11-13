@@ -15,6 +15,7 @@ HashiCorp Engineering Services Hackathon 2020
 - [x] Install rpm file by name from cached metadata
 - [x] Track installed packages
 - [x] Install a specific version of a package
+- [x] Install package dependencies
 - [ ] Reconcile dependency versions and dependency graph
 - [ ] Process install/uninstall hooks
 
