@@ -81,3 +81,28 @@ This will set up a test repo on a local webserver.  The repo file will be availa
 ```bash
 ./rpmac add-repo ${PWD}/test/repo/test.repo
 ```
+
+### Search for a package	
+
+```bash	
+./rpmac search kpfoo	
+```	
+
+### Install a package	
+
+```bash	
+./rpmac install kpfoo	
+```	
+
+### Uninstall a package	
+
+```bash	
+./rpmac uninstall kpfoo	
+```	
+
+### Upgrade a package	
+
+```bash	
+./rpmac install kpfoo=1.1.0	
+./rpmac upgrade kpfoo	
+```
